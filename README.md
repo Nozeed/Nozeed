@@ -1,5 +1,5 @@
 <div align="center">
-  <img height="150" src="https://pic.4th.in/images/2025/01/12/nozeedv2.png"  />
+  <img height="150" src="https://pic.4th.in/images/2026/02/11/NOZEED_LOGO2.png"  />
 </div>
 
 ###
