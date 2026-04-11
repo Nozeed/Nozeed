@@ -89,10 +89,32 @@ You are an experienced web developer and designer with extensive experience in b
 - Loading: Green running line
 - Add to cart: Bounce animation
 
-#### 9. Mobile Design
+#### 9. Responsive Design - 100% Device Support
+**MANDATORY REQUIREMENT**: The website MUST be 100% responsive and work flawlessly on ALL devices:
+
+- **Desktop**: 1920px+ screens
+- **Laptop**: 1366px - 1920px screens
+- **Tablet**: 768px - 1366px screens (iPad, Android tablets)
+- **Mobile**: 320px - 768px screens (iPhone, Android phones)
+- **Large Mobile**: 768px - 1024px screens (phablets)
+
+**Responsive Implementation Rules**:
+- Use Bootstrap 5.3.8 responsive grid system (col-*, col-md-*, col-lg-*, col-xl-*)
+- All layouts must use fluid containers and responsive breakpoints
+- Images must be responsive with max-width: 100%
+- Text must be readable on all screen sizes (minimum 14px on mobile)
+- Touch targets must be at least 44x44px on mobile devices
+- Navigation must collapse to hamburger menu on mobile (<768px)
+- Forms must be fully responsive with proper spacing on mobile
+- Tables must be horizontally scrollable on mobile or use card layout
+- All interactive elements must work with touch gestures on mobile
+- Test and verify responsiveness across ALL breakpoints before deployment
+
+**Mobile-Specific Features**:
 - Sticky bottom bar: Home / Cart / Profile
 - Large "Buy Now" button full width
 - Swipe gesture for product browsing
+- Optimized touch interactions for mobile
 
 #### 10. UX Strategy
 - Green = Buy / Safe
@@ -110,11 +132,11 @@ Modern, clean UI with smooth transitions
 - **Font**: Google Fonts (Kanit for headings, Sarabun for body)
 
 ## Routing System
-- **Query String / GET Parameters** only (e.g., index.php?page=products)
+- **Query String / GET Parameters** only (internal routing uses ?page=xxx)
 - **NO Router system** - use simple query parameters
 - **CLEAN URLs**: Use `.htaccess` with `mod_rewrite` to hide `index.php` from URLs
-- Example: `/products` should rewrite to `index.php?page=products`
-- Example: `/login` should rewrite to `index.php?page=login`
+- User sees: `/products`, `/login`, `/cart` (clean URLs without index.php)
+- Internally rewrites to: `index.php?page=products`, `index.php?page=login`, `index.php?page=cart`
 - **ALL links in the website must use clean URLs** (e.g., `/products`, `/login`, `/cart`)
 - **NO `index.php?page=` in any URLs displayed to users
 
@@ -251,7 +273,11 @@ Modern, clean UI with smooth transitions
 
 ### Product Display
 - **Card layout** with beautiful design
-- Category filtering available
+- **Category Menu**: Horizontal menu bar at the top of the page (NOT left sidebar)
+  - Categories arranged in a horizontal scrollable row
+  - Active category highlighted with green accent
+  - Responsive: On mobile, horizontally scrollable with touch swipe
+  - "All Categories" option as first item
 - Bootstrap carousel for product gallery (max 4 images)
 - If single image → show as cover image
 - If multiple images (gallery mode) → use Bootstrap carousel
@@ -280,44 +306,46 @@ Modern, clean UI with smooth transitions
 ### Delivery Types
 
 **1. Auto Delivery**
-- Products are delivered immediately after successful payment
+- Products are delivered immediately after successful credit deduction
 - System automatically assigns product keys/accounts from the product's key pool
 - No admin intervention required
 - Best for: Game keys, digital codes, account credentials
+- Order status: "Delivered"
 
 **2. Manual Delivery**
 - Products require admin approval before delivery
 - Admin must manually send product to user after purchase
-- Order status shows "pending delivery" until admin sends
+- Order status shows "Pending" (Waiting for product) until admin sends
 - Admin can add delivery notes/credentials
 - Best for: Custom services, manual processing, verification-required items
+- Order status after admin sends: "Delivered"
 
 ### Auto Delivery Implementation
 - Store product keys/accounts in `products` table (comma-separated)
-- On successful payment:
+- On successful credit deduction:
   - Check if product has available keys
   - Assign first available key to order
   - Remove key from product pool
-  - Update order status to "completed"
+  - Update order status to "Delivered"
   - Send notification to user
 - If no keys available: Show error, prevent purchase
 
 ### Manual Delivery Implementation
-- On successful payment:
-  - Create order with status "pending_delivery"
- - Notify admin of new manual delivery order
+- On successful credit deduction:
+  - Create order with status "Pending" (Waiting for product)
+  - Notify admin of new manual delivery order
 - Admin workflow:
-  - View orders with "pending_delivery" status
+  - View orders with "Pending" status
   - Click "Send Product" button
   - Enter delivery content (keys, credentials, instructions)
   - Submit to complete delivery
-  - Update order status to "completed"
+  - Update order status to "Delivered"
   - Send notification to user
 
 ### Delivery Display in Purchase History
-- **Auto Delivery**: Show delivered key/account immediately
-- **Manual Delivery**: Show "Pending Delivery" status until admin sends
-- After manual delivery: Show delivered content
+- **Auto Delivery**: Show delivered key/account immediately with status "Delivered"
+- **Manual Delivery**: Show status "Pending" until admin sends
+- After manual delivery: Show status "Delivered" and display delivered content
 - Both types: Allow copy/download of delivered content
 
 ## Shopping Cart System
@@ -341,12 +369,12 @@ Modern, clean UI with smooth transitions
 2. Applies coupon (optional)
 3. Proceeds to checkout
 4. **Credit Check**: Verify user has sufficient credit balance
-   - If insufficient: Show error "เครดิตไม่เพียงพอ" with link to `/topup` page, prevent checkout
+   - If insufficient: Show error "Insufficient credit" with link to `/topup` page, prevent checkout
    - If sufficient: Proceed with credit deduction
 5. **Credit Payment Only**: Deduct credit from user balance immediately
 6. Order created:
-   - If auto delivery: status "completed", product delivered immediately
-   - If manual delivery: status "pending_delivery", await admin approval
+   - If auto delivery: status "Delivered", product delivered immediately
+   - If manual delivery: status "Pending", await admin approval
 7. Discord webhook notification sent
 
 ### Topup First Requirement
@@ -355,7 +383,7 @@ Modern, clean UI with smooth transitions
 - Checkout flow:
   - Check user credit balance
   - If credit >= total: Allow purchase, deduct credit immediately
-  - If credit < total: Show "เครดิตไม่เพียงพอ" error with "เติมเงิน" button
+  - If credit < total: Show "Insufficient credit" error with "Top Up" button
   - Redirect insufficient balance users to `/topup` page
 - Payment methods (PromptPay/TrueWallet/Redeem) are ONLY available on topup page
 - Users must complete topup → return to checkout → complete purchase with credit
@@ -363,12 +391,21 @@ Modern, clean UI with smooth transitions
 ### Purchase History
 - User can view all past orders
 - Show order details: products, total, date, status
-- **Auto Delivery**: Display delivered keys/accounts immediately
-- **Manual Delivery**: Show "Pending Delivery" until admin sends
-- After delivery: Display delivered content
+- **Order Status Options**:
+  - "Pending" (Waiting for product) - For manual delivery before admin sends
+  - "Delivered" - For auto delivery immediately, or manual delivery after admin sends
+- **Auto Delivery**: Display delivered keys/accounts immediately with status "Delivered"
+- **Manual Delivery**: Show status "Pending" until admin sends, then "Delivered"
 - Downloadable/copyable product keys/credentials
 
 ## Homepage Design
+
+**Homepage Structure** (in order):
+1. **Navigation Bar** (shared header)
+2. **Hero Section**
+3. **Statistics Section**
+4. **New Products Section**
+5. **Footer** (shared footer)
 
 ### Hero Section
 - **Carousel/slider** with 3 background images
@@ -376,21 +413,21 @@ Modern, clean UI with smooth transitions
 - Smooth transitions between slides
 - Call-to-action buttons
 
-### Latest Products
-- Display latest products in card layout below hero section
+### Statistics Section
+- Display 3 key statistics in card/grid layout:
+  - **Total Products** - Count of active products
+  - **Total Members** - Count of registered users
+  - **Total Sold** - Count of completed orders
+- Statistics fetched from database in real-time
+- Display with icons and numbers
+- Green accent color for statistics
+- Responsive grid layout (3 columns on desktop, 1 column on mobile)
+
+### New Products Section
+- Display latest products in card layout below statistics section
 - Show product image, name, price
-
-### Recently Sold
-- Display recently sold products (small cards)
-- Less prominent than latest products
-- Shows what others are buying
-
-### Popup Promotion
-- **Modal popup** for promotions/news
-- Shows as image only
-- Close button to dismiss
-- Configurable in Admin (enable/disable, set image URL)
-- Example: https://img2.pic.in.th/image667c3634ae8751a8.png
+- Limit to latest 8-12 products
+- Category filter available
 
 ## Admin Dashboard
 
@@ -424,10 +461,10 @@ You must analyze and include all necessary admin features:
 - Order status management
 - Search/filter orders
 - **Manual Delivery Queue**:
-  - View all orders with "pending_delivery" status
+  - View all orders with "Pending" status
   - Send product to user (enter delivery content)
   - Add delivery notes
-  - Mark as completed
+  - Mark as "Delivered"
 - **Auto Delivery Monitoring**:
   - View auto-delivered orders
   - Check key inventory status
@@ -576,7 +613,7 @@ You MUST follow this stepwise process to ensure correct implementation:
 - Include all tables: users, admins, products, categories, orders, order_items, coupons, redeem_codes, site_settings, payments
 - **Add delivery-related fields**:
   - `products` table: delivery_type (enum: 'manual', 'auto'), product_keys (text - comma-separated)
-  - `orders` table: delivery_status (enum: 'pending', 'delivered', 'pending_delivery'), delivery_content (text)
+  - `orders` table: delivery_status (enum: 'pending', 'delivered'), delivery_content (text)
   - `order_items` table: assigned_key (text - for auto delivery)
 - Use proper data types, indexes, foreign keys
 - Add seed data file with sample data
@@ -633,8 +670,8 @@ You MUST follow this stepwise process to ensure correct implementation:
 ### Step 9: Order System
 - Create checkout flow
 - Create order processing with delivery type logic:
-  - Auto delivery: Assign key immediately, mark as completed
-  - Manual delivery: Mark as pending_delivery
+  - Auto delivery: Assign key immediately, mark as "delivered"
+  - Manual delivery: Mark as "pending"
 - Create purchase history page with delivery status display
 - Display delivered products
 - **Verify**: Test complete purchase flow for both delivery types, order history display
@@ -650,9 +687,9 @@ You MUST follow this stepwise process to ensure correct implementation:
 - Create dashboard with analytics
 - Create orders management
 - **Add Manual Delivery Queue**:
-  - List pending_delivery orders
+  - List orders with "pending" status
   - Send product form with delivery content
-  - Complete delivery action
+  - Complete delivery action (mark as "delivered")
 - Create users management (with email/password edit)
 - Create coupons management
 - Create redeem codes management
